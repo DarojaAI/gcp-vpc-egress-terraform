@@ -11,7 +11,7 @@ module "vpc_egress" {
   vpc_name    = "rag-research-vpc"
   subnet_name = "postgres"
   subnet_cidr = "10.1.0.0/24"
-  environment = "production"
+  environment = "prod"
 
   allow_ssh            = true
   allow_ssh_from_cidrs = ["YOUR_IP/32"] # Restrict SSH to your IP
