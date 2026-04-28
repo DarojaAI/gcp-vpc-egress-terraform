@@ -55,8 +55,6 @@ resource "google_compute_router" "main" {
   network = google_compute_network.main.id
 
   depends_on = [google_project_service.compute]
-
-  labels = var.tags
 }
 
 # ============================================
