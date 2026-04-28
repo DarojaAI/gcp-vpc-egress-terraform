@@ -75,8 +75,8 @@ variable "tags" {
   description = "Default tags for all resources"
   type        = map(string)
   default = {
-    module      = "gcp-vpc-egress-terraform"
-    managed_by  = "terraform"
+    module     = "gcp-vpc-egress-terraform"
+    managed_by = "terraform"
   }
 }
 

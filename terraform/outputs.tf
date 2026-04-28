@@ -80,13 +80,13 @@ output "firewall_egress_rule" {
 output "connection_info" {
   description = "Connection information for referencing in other modules"
   value = {
-    vpc_id         = google_compute_network.main.id
-    subnet_id      = google_compute_subnetwork.main.id
-    subnet_cidr    = google_compute_subnetwork.main.ip_cidr_range
-    router_id      = google_compute_router.main.id
-    router_name    = google_compute_router.main.name
-    nat_name       = google_compute_router_nat.main.name
-    region         = var.region
-    project_id     = var.project_id
+    vpc_id      = google_compute_network.main.id
+    subnet_id   = google_compute_subnetwork.main.id
+    subnet_cidr = google_compute_subnetwork.main.ip_cidr_range
+    router_id   = google_compute_router.main.id
+    router_name = google_compute_router.main.name
+    nat_name    = google_compute_router_nat.main.name
+    region      = var.region
+    project_id  = var.project_id
   }
 }
