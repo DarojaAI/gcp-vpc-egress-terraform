@@ -44,13 +44,13 @@ variable "environment" {
 variable "enable_flow_logs" {
   description = "Enable VPC flow logging"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "allow_ssh" {
   description = "Allow SSH access from anywhere"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "allow_ssh_from_cidrs" {
@@ -62,7 +62,7 @@ variable "allow_ssh_from_cidrs" {
 variable "allow_postgres" {
   description = "Allow PostgreSQL access within subnet"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "postgres_port" {
@@ -83,7 +83,7 @@ variable "tags" {
 variable "log_config_enabled" {
   description = "Enable logging for flow logs"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "flow_sampling" {
