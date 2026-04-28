@@ -3,7 +3,7 @@
 # =============================================================================
 
 module "vpc_egress" {
-  source = "../"
+  source = "../terraform"
 
   project_id  = "my-project-id"
   region      = "us-central1"

@@ -41,8 +41,6 @@ resource "google_compute_subnetwork" "main" {
       metadata             = "INCLUDE_ALL_METADATA"
     }
   }
-
-  labels = var.tags
 }
 
 # ============================================

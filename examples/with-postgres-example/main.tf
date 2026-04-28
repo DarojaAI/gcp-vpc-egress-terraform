@@ -4,7 +4,7 @@
 
 # VPC with egress
 module "vpc_egress" {
-  source = "../"
+  source = "../../terraform"
 
   project_id  = var.project_id
   region      = var.region
@@ -13,10 +13,10 @@ module "vpc_egress" {
   subnet_cidr = "10.1.0.0/24"
   environment = "production"
 
-  allow_ssh           = true
-  allow_ssh_from_cidrs = ["YOUR_IP/32"]  # Restrict SSH to your IP
-  allow_postgres      = true
-  postgres_port       = 5432
+  allow_ssh            = true
+  allow_ssh_from_cidrs = ["YOUR_IP/32"] # Restrict SSH to your IP
+  allow_postgres       = true
+  postgres_port        = 5432
 }
 
 # PostgreSQL VM using the VPC

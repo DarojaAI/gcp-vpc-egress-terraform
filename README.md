@@ -47,7 +47,7 @@ output "router_id" {
 ```hcl
 module "vpc_egress" {
   source = "git::https://github.com/DarojaAI/gcp-vpc-egress-terraform.git//terraform"
-  
+
   project_id = var.project_id
   region     = var.region
   vpc_name   = "rag-research-vpc"
@@ -182,7 +182,7 @@ module "vpc" {
 
 module "postgres" {
   source = "git::https://github.com/DarojaAI/gcp-postgres-terraform.git//terraform"
-  
+
   # Use VPC from egress module
   network_id  = module.vpc.vpc_id
   subnet_id   = module.vpc.subnet_id
