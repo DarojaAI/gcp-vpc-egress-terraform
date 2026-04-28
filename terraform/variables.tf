@@ -1,0 +1,98 @@
+# =============================================================================
+# Variables for GCP VPC Egress Module
+# =============================================================================
+
+variable "project_id" {
+  description = "GCP Project ID"
+  type        = string
+}
+
+variable "region" {
+  description = "GCP region (e.g., us-central1)"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "vpc_name" {
+  description = "VPC network name"
+  type        = string
+}
+
+variable "subnet_name" {
+  description = "Subnet name suffix (full name: {vpc_name}-{subnet_name})"
+  type        = string
+  default     = "subnet"
+}
+
+variable "subnet_cidr" {
+  description = "Subnet CIDR block (e.g., 10.0.0.0/24)"
+  type        = string
+  default     = "10.0.0.0/24"
+}
+
+variable "environment" {
+  description = "Environment name (dev, staging, prod)"
+  type        = string
+  default     = "dev"
+
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    error_message = "Environment must be dev, staging, or prod"
+  }
+}
+
+variable "enable_flow_logs" {
+  description = "Enable VPC flow logging"
+  type        = bool
+  default     = true
+}
+
+variable "allow_ssh" {
+  description = "Allow SSH access from anywhere"
+  type        = bool
+  default     = true
+}
+
+variable "allow_ssh_from_cidrs" {
+  description = "CIDR blocks allowed for SSH (if not allowing from anywhere)"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
+variable "allow_postgres" {
+  description = "Allow PostgreSQL access within subnet"
+  type        = bool
+  default     = true
+}
+
+variable "postgres_port" {
+  description = "PostgreSQL port"
+  type        = number
+  default     = 5432
+}
+
+variable "tags" {
+  description = "Default tags for all resources"
+  type        = map(string)
+  default = {
+    module      = "gcp-vpc-egress-terraform"
+    managed_by  = "terraform"
+  }
+}
+
+variable "log_config_enabled" {
+  description = "Enable logging for flow logs"
+  type        = bool
+  default     = true
+}
+
+variable "flow_sampling" {
+  description = "VPC flow sampling rate (0.0 to 1.0)"
+  type        = number
+  default     = 0.5
+
+  validation {
+    condition     = var.flow_sampling >= 0 && var.flow_sampling <= 1
+    error_message = "flow_sampling must be between 0 and 1"
+  }
+}
