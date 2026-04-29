@@ -18,14 +18,14 @@ module "vpc_module" {
   subnet_cidr = var.subnet_cidr
   environment = var.environment
 
-  enable_flow_logs      = var.enable_flow_logs
-  allow_ssh             = var.allow_ssh
-  allow_ssh_from_cidrs  = var.allow_ssh_from_cidrs
-  allow_postgres        = var.allow_postgres
-  postgres_port         = var.postgres_port
-  tags                  = var.tags
-  log_config_enabled    = var.log_config_enabled
-  flow_sampling         = var.flow_sampling
+  enable_flow_logs     = var.enable_flow_logs
+  allow_ssh            = var.allow_ssh
+  allow_ssh_from_cidrs = var.allow_ssh_from_cidrs
+  allow_postgres       = var.allow_postgres
+  postgres_port        = var.postgres_port
+  tags                 = var.tags
+  log_config_enabled   = var.log_config_enabled
+  flow_sampling        = var.flow_sampling
 }
 
 # =============================================================================
