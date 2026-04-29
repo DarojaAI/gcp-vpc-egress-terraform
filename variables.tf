@@ -31,14 +31,9 @@ variable "subnet_cidr" {
 }
 
 variable "environment" {
-  description = "Environment name (dev, staging, prod)"
+  description = "Environment name (e.g., dev, staging, prod, eai, etc.)"
   type        = string
   default     = "dev"
-
-  validation {
-    condition     = contains(["dev", "staging", "prod"], var.environment)
-    error_message = "Environment must be dev, staging, or prod"
-  }
 }
 
 variable "enable_flow_logs" {
