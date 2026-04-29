@@ -82,11 +82,6 @@ output "router_name" {
   value       = module.vpc_module.router_name
 }
 
-output "nat_gateway_ips" {
-  description = "External IP addresses for NAT Gateway"
-  value       = module.vpc_module.nat_gateway_ips
-}
-
 output "firewall_postgres_rule" {
   description = "Firewall rule for PostgreSQL"
   value       = module.vpc_module.firewall_postgres_rule
