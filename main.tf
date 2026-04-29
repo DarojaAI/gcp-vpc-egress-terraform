@@ -87,12 +87,32 @@ output "nat_gateway_ips" {
   value       = module.vpc_module.nat_gateway_ips
 }
 
-output "firewall_postgres_rule_id" {
-  description = "Firewall rule ID for PostgreSQL"
-  value       = module.vpc_module.firewall_postgres_rule_id
+output "firewall_postgres_rule" {
+  description = "Firewall rule for PostgreSQL"
+  value       = module.vpc_module.firewall_postgres_rule
 }
 
-output "firewall_ssh_rule_id" {
-  description = "Firewall rule ID for SSH"
-  value       = module.vpc_module.firewall_ssh_rule_id
+output "firewall_ssh_rule" {
+  description = "Firewall rule for SSH"
+  value       = module.vpc_module.firewall_ssh_rule
+}
+
+output "firewall_internal_rule" {
+  description = "Firewall rule for internal traffic"
+  value       = module.vpc_module.firewall_internal_rule
+}
+
+output "firewall_egress_rule" {
+  description = "Firewall rule for egress"
+  value       = module.vpc_module.firewall_egress_rule
+}
+
+output "nat_name" {
+  description = "Cloud NAT gateway name"
+  value       = module.vpc_module.nat_name
+}
+
+output "connection_info" {
+  description = "Connection information"
+  value       = module.vpc_module.connection_info
 }
