@@ -9,5 +9,5 @@ terraform {
   }
 }
 
-# Provider is configured by the consuming root module.
+# Provider is passed from root module via the 'providers' block in the module call.
 # This allows the module to be used with count, for_each, and depends_on.

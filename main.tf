@@ -11,6 +11,12 @@
 module "vpc_module" {
   source = "./terraform"
 
+  # Pass provider configuration to nested module
+  # This allows the module to be used with count, for_each, and depends_on
+  providers = {
+    google = google
+  }
+
   project_id  = var.project_id
   region      = var.region
   vpc_name    = var.vpc_name
