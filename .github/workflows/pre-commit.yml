@@ -16,6 +16,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          fetch-tags: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -31,7 +32,13 @@ jobs:
         run: pip install pre-commit
 
       - name: Run pre-commit hooks
-        run: pre-commit run --all-files
+        run: |
+          # Clear pre-commit cache to avoid git fetch errors
+          rm -rf ~/.cache/pre-commit
+          # Disable hook auto-update to prevent git fetch
+          export PRE_COMMIT_DISABLE_UPDATE_HOOKS=true
+          # Run with frozen lock file to avoid updates
+          PRE_COMMIT_HOME=/tmp/pre-commit-cache pre-commit run --all-files --show-diff-on-failure
 
   terraform-validate:
     runs-on: ubuntu-latest
