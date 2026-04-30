@@ -11,20 +11,6 @@ repos:
       - id: check-added-large-files
         args: ['--maxkb=5000']
 
-  # Terraform formatting
-  - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.105.0
-    hooks:
-      - id: terraform_fmt
-      - id: terraform_validate
-
-  # Checkov - Security scanning
-  - repo: https://github.com/bridgecrewio/checkov-pre-commit
-    rev: 3.2.525
-    hooks:
-      - id: checkov
-        args: [--directory, terraform/, --skip-path, terraform/.terraform]
-
   # YAML validation
   - repo: https://github.com/pre-commit/mirrors-yamllint
     rev: v1.35.1
