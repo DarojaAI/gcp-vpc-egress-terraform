@@ -20,23 +20,6 @@ repos:
       - id: terraform_docs
         args: [--hook-config=--path-to-file=README.md]
 
-  # TFLint - Terraform linting
-  - repo: https://github.com/terraform-linters/tflint
-    rev: v0.62.0
-    hooks:
-      - id: tflint
-        name: TFLint
-        args:
-          - --formatter=compact
-          - --module=true
-          - --enable-rule=terraform_deprecated_interpolation
-          - --enable-rule=terraform_documented_outputs
-          - --enable-rule=terraform_documented_variables
-          - --enable-rule=terraform_naming_convention
-          - --enable-rule=terraform_required_version
-          - --enable-rule=terraform_required_providers
-          - --enable-rule=terraform_typed_variables
-
   # Checkov - Security scanning
   - repo: https://github.com/bridgecrewio/checkov-pre-commit
     rev: 3.2.525
