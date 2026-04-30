@@ -95,3 +95,32 @@ module "vpc_egress" {
 ## Outputs
 
 The module exports `vpc_id`, `subnet_id`, `router_id`, `nat_name`, and `connection_info` for integration with other modules (PostgreSQL, Kubernetes, dbt, etc.).
+
+## Release Process
+
+This project uses **Release Please** for automated semantic versioning based on conventional commits.
+
+### Conventional Commits
+
+Use these commit types to trigger version bumps:
+
+| Commit Type | Release Type | Example |
+|-------------|--------------|---------|
+| `fix:` | patch (1.0.1 → 1.0.2) | `fix: resolve SSH firewall rule not applying` |
+| `feat:` | minor (1.0.1 → 1.1.0) | `feat: add support for multiple subnets` |
+| `feat!:` or `BREAKING CHANGE:` | major (1.0.1 → 2.0.0) | `feat!: change variable name from vpc_cidr to subnet_cidr` |
+| `docs:`, `chore:`, `refactor:` | no release | `docs: update README with new examples` |
+
+### How It Works
+
+1. **Push to main/master** → Release Please analyzes commits and creates a PR with version changes
+2. **Merge the PR** → Release Please creates a `v{major}.{minor}.{patch}` tag
+3. **Tag push** → GitHub Release is automatically created with changelog
+
+### Check Current Version
+
+```bash
+cat VERSION
+# or
+git describe --tags --abbrev=0
+```
