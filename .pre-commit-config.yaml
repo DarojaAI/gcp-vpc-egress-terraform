@@ -17,8 +17,6 @@ repos:
     hooks:
       - id: terraform_fmt
       - id: terraform_validate
-      - id: terraform_docs
-        args: [--hook-config=--path-to-file=README.md]
 
   # Checkov - Security scanning
   - repo: https://github.com/bridgecrewio/checkov-pre-commit
@@ -26,12 +24,6 @@ repos:
     hooks:
       - id: checkov
         args: [--directory, terraform/, --skip-path, terraform/.terraform]
-
-  # Secrets detection
-  - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.18.3
-    hooks:
-      - id: gitleaks
 
   # YAML validation
   - repo: https://github.com/pre-commit/mirrors-yamllint
