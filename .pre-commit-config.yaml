@@ -22,7 +22,7 @@ repos:
 
   # TFLint - Terraform linting
   - repo: https://github.com/terraform-linters/tflint
-    rev: v0.57.0
+    rev: v0.62.0
     hooks:
       - id: tflint
         name: TFLint
@@ -39,7 +39,7 @@ repos:
 
   # Checkov - Security scanning
   - repo: https://github.com/bridgecrewio/checkov-pre-commit
-    rev: 3.3.202
+    rev: 3.2.525
     hooks:
       - id: checkov
         args: [--directory, terraform/, --skip-path, terraform/.terraform]
