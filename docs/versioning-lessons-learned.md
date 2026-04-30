@@ -196,6 +196,7 @@ The error occurs in **pre-commit's cached hook repositories**, NOT in the projec
 ### Recommended Pre-commit Config (Minimal Set)
 ```yaml
 repos:
+  # Filesystem hygiene (always works)
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -207,19 +208,25 @@ repos:
       - id: check-added-large-files
         args: ['--maxkb=5000']
 
-  - repo: https://github.com/pre-commit/mirrors-yamllint
-    rev: v1.35.1
-    hooks:
-      - id: yamllint
-        args: [--strict]
-        files: ^\.github/workflows/
-
+  # Shell script linting
+  # Note: shellcheck-py repo is https://github.com/永恒lcheck-py/shellcheck-py
+  # Tag format: 0.10.0.1 (NO 'v' prefix)
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
+    rev: v0.10.0.1  # This is actually fetched as 0.10.0.1 internally
     hooks:
       - id: shellcheck
         args: [-x, -s, bash]
 ```
+
+### Known Hook Repository Issues
+
+These hooks **do not work** - do NOT use them:
+
+| Hook | Problem | Alternative |
+|------|---------|-------------|
+| `pre-commit/mirrors-yamllint` | Repo does not exist | Use `pre-commit-hooks` built-in or skip yamllint |
+| `bridgecrewio/checkov-pre-commit` | Repo does not exist | Use `bridgecrewio/checkov` directly |
+| `terraform-linters/tflint` | Has no pre-commit hooks | Skip TFLint or use separate CI job |
 
 ### Recommended GitHub Actions Workflow
 ```yaml
@@ -343,14 +350,14 @@ Pre-commit checks failed in PR #121 (rag_research_tool) with various errors:
 
 The failures occurred at **hook repository initialization**, not during code checking:
 
-| Hook | Issue | Init Result |
-|------|-------|-------------|
-| checkov | Repo doesn't exist | ❌ FAIL |
-| tflint | Wrong repo (terraform-linters/tflint has no hooks) | ❌ FAIL |
-| tflint (fix) | Wrong hook ID (tflint vs tflint-conda) | ❌ FAIL |
-| yamllint | Repo not found (pre-commit/mirrors-yamllint doesn't exist) | ❌ FAIL |
-| shellcheck-py | Tag format issue (v0.9.0.5 vs 0.9.0.5) | ❌ FAIL |
-| pre-commit-hooks | Works correctly | ✅ PASS |
+| Hook | Issue | Repo Referenced | Correct Repo | Init Result |
+|------|-------|----------------|--------------|-------------|
+| checkov | Repo doesn't exist | `bridgecrewio/checkov-pre-commit` | Does not exist - use `bridgecrewio/checkov` | ❌ FAIL |
+| tflint | Wrong repo | `terraform-linters/tflint` | Has no hooks - use `ansible-community/ansible-lint` or skip | ❌ FAIL |
+| tflint (fix attempt) | Wrong hook ID | `terraform-linters/tflint` | Hook ID `tflint` doesn't exist, only `tflint-conda` | ❌ FAIL |
+| yamllint | Repo not found | `pre-commit/mirrors-yamllint` | Does not exist - use `pre-commit/pre-commit-hooks` with built-in yamllint | ❌ FAIL |
+| shellcheck-py | Tag format issue | `v0.9.0.5` in repo | Actual tag is `0.9.0.5` (no 'v' prefix) | ❌ FAIL |
+| pre-commit-hooks | Works correctly | `pre-commit/pre-commit-hooks` | Correct repo | ✅ PASS |
 
 ### Key Insight
 Pre-commit initializes hook repos **sequentially**. One failure breaks the entire chain - even hooks that would have worked never get to execute.
@@ -376,15 +383,38 @@ Removed ~130 lines of broken hooks. Created follow-up issues for re-enabling:
 4. One bad hook breaks all subsequent hooks
 
 ### Check Before Adding Hooks
+
+Before adding any hook to `.pre-commit-config.yaml`, verify it works:
+
 ```bash
-# Verify repo exists
+# 1. Verify the repo exists
 gh repo view owner/repo
 
-# Verify tags exist
-git ls-remote --tags https://github.com/owner/repo
+# 2. Verify the tag/revision exists
+git ls-remote --tags https://github.com/owner/repo | grep -E "^.*refs/tags/v?0\." | head -5
 
-# Verify hooks file exists
-curl -s https://raw.githubusercontent.com/owner/repo/main/.pre-commit-hooks.yaml
+# 3. Verify the hooks file exists
+curl -s https://raw.githubusercontent.com/owner/repo/main/.pre-commit-hooks.yaml | head -20
+```
+
+**Specific checks for the hooks that failed:**
+
+```bash
+# Check if checkov-pre-commit exists (it doesn't)
+gh repo view bridgecrewio/checkov-pre-commit 2>&1 | head -5
+# Result: NOT FOUND
+
+# Check if mirrors-yamllint exists (it doesn't)
+gh repo view pre-commit/mirrors-yamllint 2>&1 | head -5
+# Result: NOT FOUND
+
+# Check TFLint tags (has tags but NO pre-commit hooks)
+git ls-remote --tags https://github.com/terraform-linters/tflint | tail -5
+# Result: Tags exist but no .pre-commit-hooks.yaml in repo
+
+# Check shellcheck-py tags (uses NO 'v' prefix)
+git ls-remote --tags https://github.com/shellcheck-py/shellcheck-py | tail -3
+# Result: 0.9.0.5, 0.10.0.0, 0.10.0.1 (no 'v' prefix)
 ```
 
 ---
