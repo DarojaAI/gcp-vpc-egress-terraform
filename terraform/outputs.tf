@@ -4,57 +4,57 @@
 
 output "vpc_id" {
   description = "VPC network ID"
-  value       = google_compute_network.main.id
+  value       = local.vpc_id
 }
 
 output "vpc_name" {
   description = "VPC network name"
-  value       = google_compute_network.main.name
+  value       = local.vpc_name
 }
 
 output "vpc_self_link" {
   description = "VPC network self link"
-  value       = google_compute_network.main.self_link
+  value       = local.vpc_self_link
 }
 
 output "subnet_id" {
   description = "Subnet ID"
-  value       = google_compute_subnetwork.main.id
+  value       = local.subnet_id
 }
 
 output "subnet_name" {
   description = "Subnet name"
-  value       = google_compute_subnetwork.main.name
+  value       = local.subnet_name
 }
 
 output "subnet_cidr" {
   description = "Subnet CIDR block"
-  value       = google_compute_subnetwork.main.ip_cidr_range
+  value       = local.subnet_cidr
 }
 
 output "subnet_self_link" {
   description = "Subnet self link"
-  value       = google_compute_subnetwork.main.self_link
+  value       = local.subnet_self_link
 }
 
 output "subnet_gateway_address" {
   description = "Subnet gateway address"
-  value       = google_compute_subnetwork.main.gateway_address
+  value       = local.subnet_gateway
 }
 
 output "router_id" {
-  description = "Cloud Router ID"
-  value       = google_compute_router.main.id
+  description = "Cloud Router ID (null when using existing VPC)"
+  value       = var.use_existing ? null : google_compute_router.main[0].id
 }
 
 output "router_name" {
-  description = "Cloud Router name"
-  value       = google_compute_router.main.name
+  description = "Cloud Router name (null when using existing VPC)"
+  value       = var.use_existing ? null : google_compute_router.main[0].name
 }
 
 output "nat_name" {
-  description = "Cloud NAT name"
-  value       = google_compute_router_nat.main.name
+  description = "Cloud NAT name (null when using existing VPC)"
+  value       = var.use_existing ? null : google_compute_router_nat.main[0].name
 }
 
 output "firewall_internal_rule" {
@@ -77,16 +77,22 @@ output "firewall_egress_rule" {
   value       = google_compute_firewall.allow_egress.name
 }
 
+output "use_existing" {
+  description = "Whether using existing VPC/subnet"
+  value       = var.use_existing
+}
+
 output "connection_info" {
   description = "Connection information for referencing in other modules"
   value = {
-    vpc_id      = google_compute_network.main.id
-    subnet_id   = google_compute_subnetwork.main.id
-    subnet_cidr = google_compute_subnetwork.main.ip_cidr_range
-    router_id   = google_compute_router.main.id
-    router_name = google_compute_router.main.name
-    nat_name    = google_compute_router_nat.main.name
-    region      = var.region
-    project_id  = var.project_id
+    vpc_id       = local.vpc_id
+    subnet_id    = local.subnet_id
+    subnet_cidr  = local.subnet_cidr
+    router_id    = var.use_existing ? null : google_compute_router.main[0].id
+    router_name  = var.use_existing ? null : google_compute_router.main[0].name
+    nat_name     = var.use_existing ? null : google_compute_router_nat.main[0].name
+    region       = var.region
+    project_id   = var.project_id
+    use_existing = var.use_existing
   }
 }

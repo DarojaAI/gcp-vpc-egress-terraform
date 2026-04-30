@@ -12,24 +12,59 @@ resource "google_project_service" "compute" {
 }
 
 # ============================================
-# VPC Network
+# Data Sources for Existing VPC/Subnet
+# ============================================
+
+data "google_compute_network" "existing" {
+  count   = var.use_existing ? 1 : 0
+  name    = var.existing_vpc_name
+  project = var.project_id
+}
+
+data "google_compute_subnetwork" "existing" {
+  count   = var.use_existing ? 1 : 0
+  name    = var.existing_subnet_name
+  region  = var.region
+  project = var.project_id
+}
+
+# ============================================
+# Local Values for VPC/Subnet
+# ============================================
+
+locals {
+  # Use try() to safely access resources with count (returns null when count=0)
+  vpc_id           = try(google_compute_network.main[0].id, data.google_compute_network.existing[0].id)
+  vpc_name         = try(google_compute_network.main[0].name, data.google_compute_network.existing[0].name)
+  vpc_self_link    = try(google_compute_network.main[0].self_link, data.google_compute_network.existing[0].self_link)
+  subnet_id        = try(google_compute_subnetwork.main[0].id, data.google_compute_subnetwork.existing[0].id)
+  subnet_name      = try(google_compute_subnetwork.main[0].name, data.google_compute_subnetwork.existing[0].name)
+  subnet_cidr      = try(google_compute_subnetwork.main[0].ip_cidr_range, data.google_compute_subnetwork.existing[0].ip_cidr_range, var.subnet_cidr)
+  subnet_self_link = try(google_compute_subnetwork.main[0].self_link, data.google_compute_subnetwork.existing[0].self_link)
+  subnet_gateway   = try(google_compute_subnetwork.main[0].gateway_address, data.google_compute_subnetwork.existing[0].gateway_address)
+}
+
+# ============================================
+# VPC Network (created only when not using existing)
 # ============================================
 
 resource "google_compute_network" "main" {
+  count                   = var.use_existing ? 0 : 1
   name                    = var.vpc_name
   auto_create_subnetworks = false
   depends_on              = [google_project_service.compute]
 }
 
 # ============================================
-# Subnet with Flow Logging
+# Subnet with Flow Logging (created only when not using existing)
 # ============================================
 
 resource "google_compute_subnetwork" "main" {
+  count         = var.use_existing ? 0 : 1
   name          = "${var.vpc_name}-${var.subnet_name}"
   ip_cidr_range = var.subnet_cidr
   region        = var.region
-  network       = google_compute_network.main.id
+  network       = google_compute_network.main[0].id
 
   private_ip_google_access = true
 
@@ -44,24 +79,26 @@ resource "google_compute_subnetwork" "main" {
 }
 
 # ============================================
-# Cloud Router for NAT
+# Cloud Router for NAT (created only when not using existing)
 # ============================================
 
 resource "google_compute_router" "main" {
+  count   = var.use_existing ? 0 : 1
   name    = "${var.vpc_name}-router"
   region  = var.region
-  network = google_compute_network.main.id
+  network = local.vpc_id
 
   depends_on = [google_project_service.compute]
 }
 
 # ============================================
-# Cloud NAT - Outbound Internet Access
+# Cloud NAT - Outbound Internet Access (created only when not using existing)
 # ============================================
 
 resource "google_compute_router_nat" "main" {
+  count                              = var.use_existing ? 0 : 1
   name                               = "${var.vpc_name}-nat"
-  router                             = google_compute_router.main.name
+  router                             = google_compute_router.main[0].name
   region                             = var.region
   nat_ip_allocate_option             = "AUTO_ONLY"
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
@@ -81,7 +118,7 @@ resource "google_compute_router_nat" "main" {
 # Allow internal traffic within the VPC
 resource "google_compute_firewall" "allow_internal" {
   name    = "${var.vpc_name}-allow-internal"
-  network = google_compute_network.main.name
+  network = local.vpc_name
 
   direction = "INGRESS"
 
@@ -99,14 +136,14 @@ resource "google_compute_firewall" "allow_internal" {
     protocol = "icmp"
   }
 
-  source_ranges = [var.subnet_cidr]
+  source_ranges = [local.subnet_cidr]
 }
 
 # Allow SSH access
 resource "google_compute_firewall" "allow_ssh" {
   count   = var.allow_ssh ? 1 : 0
   name    = "${var.vpc_name}-allow-ssh"
-  network = google_compute_network.main.name
+  network = local.vpc_name
 
   direction = "INGRESS"
 
@@ -123,7 +160,7 @@ resource "google_compute_firewall" "allow_ssh" {
 resource "google_compute_firewall" "allow_postgres" {
   count   = var.allow_postgres ? 1 : 0
   name    = "${var.vpc_name}-allow-postgres"
-  network = google_compute_network.main.name
+  network = local.vpc_name
 
   direction = "INGRESS"
 
@@ -132,14 +169,14 @@ resource "google_compute_firewall" "allow_postgres" {
     ports    = [var.postgres_port]
   }
 
-  source_ranges = [var.subnet_cidr]
+  source_ranges = [local.subnet_cidr]
   target_tags   = ["postgres"]
 }
 
 # Allow outbound egress traffic (https, http, dns)
 resource "google_compute_firewall" "allow_egress" {
   name    = "${var.vpc_name}-allow-egress"
-  network = google_compute_network.main.name
+  network = local.vpc_name
 
   direction = "EGRESS"
 

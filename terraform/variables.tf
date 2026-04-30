@@ -91,3 +91,25 @@ variable "flow_sampling" {
     error_message = "flow_sampling must be between 0 and 1"
   }
 }
+
+# =============================================================================
+# Existing VPC / Subnet Configuration
+# =============================================================================
+
+variable "use_existing" {
+  description = "Use existing VPC and subnet instead of creating new ones"
+  type        = bool
+  default     = false
+}
+
+variable "existing_vpc_name" {
+  description = "Name of existing VPC network (required when use_existing is true)"
+  type        = string
+  default     = ""
+}
+
+variable "existing_subnet_name" {
+  description = "Name of existing subnet (required when use_existing is true)"
+  type        = string
+  default     = ""
+}
