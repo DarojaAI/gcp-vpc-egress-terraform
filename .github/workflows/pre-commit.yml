@@ -68,6 +68,11 @@ jobs:
           apt-get update && apt-get install -y shellcheck
           find . -name '*.sh' -not -path './.git/*' -exec shellcheck {} \; || true
 
+      - name: Run pre-commit
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files
+
   terraform-validate:
     runs-on: ubuntu-latest
     steps:
