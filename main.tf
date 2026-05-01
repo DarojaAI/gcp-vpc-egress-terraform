@@ -32,6 +32,10 @@ module "vpc_module" {
   tags                 = var.tags
   log_config_enabled   = var.log_config_enabled
   flow_sampling        = var.flow_sampling
+
+  use_existing         = var.use_existing
+  existing_vpc_name    = var.existing_vpc_name
+  existing_subnet_name = var.existing_subnet_name
 }
 
 # =============================================================================
