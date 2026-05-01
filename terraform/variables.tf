@@ -128,3 +128,9 @@ variable "existing_subnet_name" {
   type        = string
   default     = ""
 }
+
+variable "enable_connectivity_tests" {
+  description = "Enable GCP connectivity tests to verify egress paths"
+  type        = bool
+  default     = true
+}

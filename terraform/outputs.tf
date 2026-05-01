@@ -72,10 +72,6 @@ output "firewall_postgres_rule" {
   value       = var.allow_postgres ? google_compute_firewall.allow_postgres[0].name : null
 }
 
-output "firewall_egress_rule" {
-  description = "Egress firewall rule name"
-  value       = google_compute_firewall.allow_egress.name
-}
 
 output "use_existing" {
   description = "Whether using existing VPC/subnet"

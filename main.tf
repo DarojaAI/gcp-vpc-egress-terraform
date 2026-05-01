@@ -36,6 +36,8 @@ module "vpc_module" {
   use_existing         = var.use_existing
   existing_vpc_name    = var.existing_vpc_name
   existing_subnet_name = var.existing_subnet_name
+
+  enable_connectivity_tests = var.enable_connectivity_tests
 }
 
 # =============================================================================
