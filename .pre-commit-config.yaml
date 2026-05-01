@@ -25,3 +25,10 @@ repos:
     hooks:
       - id: shellcheck
         args: [-x, -s, bash]
+
+  # Infrastructure as Code security scanning
+  - repo: https://github.com/bridgecrewio/checkov
+    rev: '3.2.526'
+    hooks:
+      - id: checkov
+        args: [--directory, .]
