@@ -77,6 +77,13 @@ resource "google_compute_subnetwork" "main" {
       metadata             = "INCLUDE_ALL_METADATA"
     }
   }
+
+  lifecycle {
+    postcondition {
+      condition     = self.private_ip_google_access == true
+      error_message = "private_ip_google_access must remain enabled for Private Google Access."
+    }
+  }
 }
 
 # ============================================
@@ -107,6 +114,13 @@ resource "google_compute_router_nat" "main" {
   log_config {
     enable = var.log_config_enabled
     filter = "ERRORS_ONLY"
+  }
+
+  lifecycle {
+    postcondition {
+      condition     = self.nat_ip_allocate_option == "AUTO_ONLY"
+      error_message = "NAT IP allocation mode unexpectedly changed from AUTO_ONLY."
+    }
   }
 
   depends_on = [google_compute_router.main]
