@@ -1,0 +1,11 @@
+# Normalize line endings to LF for all text files in the repo.
+# Prevents CRLF churn from Windows editors flipping endings on Unix-origin files.
+* text=auto eol=lf
+
+# Explicitly mark binary types so they're never normalized.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
