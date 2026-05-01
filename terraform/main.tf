@@ -188,22 +188,3 @@ resource "google_compute_firewall" "allow_postgres" {
   target_tags   = ["postgres"]
 }
 
-# Allow outbound egress traffic (https, http, dns)
-resource "google_compute_firewall" "allow_egress" {
-  name    = "${var.vpc_name}-allow-egress"
-  network = local.vpc_name
-
-  direction = "EGRESS"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["443", "80"]
-  }
-
-  allow {
-    protocol = "udp"
-    ports    = ["53"]
-  }
-
-  destination_ranges = ["0.0.0.0/0"]
-}
