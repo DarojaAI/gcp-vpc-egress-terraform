@@ -188,3 +188,71 @@ resource "google_compute_firewall" "allow_postgres" {
   target_tags   = ["postgres"]
 }
 
+# ============================================
+# Connectivity Tests (verify egress works)
+# ============================================
+
+# Test NAT egress path: subnet -> 8.8.8.8:443
+resource "google_network_management_connectivity_test" "nat_egress" {
+  count = var.enable_connectivity_tests && !var.use_existing ? 1 : 0
+
+  name = "${var.vpc_name}-test-nat-egress"
+
+  source {
+    instance = google_compute_instance.test_vm[0].id
+  }
+
+  destination {
+    ip_address = "8.8.8.8"
+    port       = 443
+  }
+
+  protocol = "TCP"
+}
+
+# Test Private Google Access: subnet -> metadata.google.internal
+resource "google_network_management_connectivity_test" "private_google_access" {
+  count = var.enable_connectivity_tests && !var.use_existing ? 1 : 0
+
+  name = "${var.vpc_name}-test-private-google-access"
+
+  source {
+    instance = google_compute_instance.test_vm[0].id
+  }
+
+  destination {
+    ip_address = "metadata.google.internal"
+    port       = 80
+  }
+
+  protocol = "TCP"
+}
+
+# Minimal test VM (no external IP) in the subnet to run connectivity tests
+resource "google_compute_instance" "test_vm" {
+  count = var.enable_connectivity_tests && !var.use_existing ? 1 : 0
+
+  name         = "${var.vpc_name}-test-vm"
+  machine_type = "e2-micro"
+  zone         = "${var.region}-a"
+
+  boot_disk {
+    initialize_params {
+      image = "debian-cloud/debian-11"
+    }
+  }
+
+  network_interface {
+    subnetwork = google_compute_subnetwork.main[0].id
+    # No external IP - tests NAT functionality
+  }
+
+  tags = ["ssh", "postgres"]
+
+  metadata = {
+    enable-oslogin = "true"
+  }
+
+  depends_on = [google_compute_router_nat.main]
+}
+
