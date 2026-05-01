@@ -33,15 +33,16 @@ data "google_compute_subnetwork" "existing" {
 # ============================================
 
 locals {
-  # Use try() to safely access resources with count (returns null when count=0)
-  vpc_id           = try(google_compute_network.main[0].id, data.google_compute_network.existing[0].id)
-  vpc_name         = try(google_compute_network.main[0].name, data.google_compute_network.existing[0].name)
-  vpc_self_link    = try(google_compute_network.main[0].self_link, data.google_compute_network.existing[0].self_link)
-  subnet_id        = try(google_compute_subnetwork.main[0].id, data.google_compute_subnetwork.existing[0].id)
-  subnet_name      = try(google_compute_subnetwork.main[0].name, data.google_compute_subnetwork.existing[0].name)
-  subnet_cidr      = try(google_compute_subnetwork.main[0].ip_cidr_range, data.google_compute_subnetwork.existing[0].ip_cidr_range, var.subnet_cidr)
-  subnet_self_link = try(google_compute_subnetwork.main[0].self_link, data.google_compute_subnetwork.existing[0].self_link)
-  subnet_gateway   = try(google_compute_subnetwork.main[0].gateway_address, data.google_compute_subnetwork.existing[0].gateway_address)
+  # Explicitly toggle between create-mode and adopt-mode
+  # This gives clear error attribution: data source fails at data source, resource fails at resource
+  vpc_id           = var.use_existing ? data.google_compute_network.existing[0].id : google_compute_network.main[0].id
+  vpc_name         = var.use_existing ? data.google_compute_network.existing[0].name : google_compute_network.main[0].name
+  vpc_self_link    = var.use_existing ? data.google_compute_network.existing[0].self_link : google_compute_network.main[0].self_link
+  subnet_id        = var.use_existing ? data.google_compute_subnetwork.existing[0].id : google_compute_subnetwork.main[0].id
+  subnet_name      = var.use_existing ? data.google_compute_subnetwork.existing[0].name : google_compute_subnetwork.main[0].name
+  subnet_cidr      = var.use_existing ? data.google_compute_subnetwork.existing[0].ip_cidr_range : google_compute_subnetwork.main[0].ip_cidr_range
+  subnet_self_link = var.use_existing ? data.google_compute_subnetwork.existing[0].self_link : google_compute_subnetwork.main[0].self_link
+  subnet_gateway   = var.use_existing ? data.google_compute_subnetwork.existing[0].gateway_address : google_compute_subnetwork.main[0].gateway_address
 }
 
 # ============================================
