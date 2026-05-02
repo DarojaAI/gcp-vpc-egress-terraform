@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/DarojaAI/gcp-vpc-egress-terraform/compare/v1.2.0...v1.2.1) (2026-05-02)
+
+
+### Bug Fixes
+
+* remove invalid firewall_egress_rule output ([e3356ba](https://github.com/DarojaAI/gcp-vpc-egress-terraform/commit/e3356ba938a9263236ecb0d79067ecfad9bb166c))
+
 ## [1.2.0](https://github.com/DarojaAI/gcp-vpc-egress-terraform/compare/v1.1.0...v1.2.0) (2026-05-01)
 
 
