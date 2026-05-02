@@ -109,10 +109,6 @@ output "firewall_internal_rule" {
   value       = module.vpc_module.firewall_internal_rule
 }
 
-output "firewall_egress_rule" {
-  description = "Firewall rule for egress"
-  value       = module.vpc_module.firewall_egress_rule
-}
 
 output "nat_name" {
   description = "Cloud NAT gateway name"
