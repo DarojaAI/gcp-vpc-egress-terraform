@@ -92,7 +92,7 @@ resource "google_compute_subnetwork" "main" {
 
 resource "google_compute_router" "main" {
   count   = var.use_existing ? 0 : 1
-  name    = "${var.vpc_name}-router"
+  name    = "router-${var.vpc_name}"
   region  = var.region
   network = local.vpc_id
 
@@ -105,7 +105,7 @@ resource "google_compute_router" "main" {
 
 resource "google_compute_router_nat" "main" {
   count                              = var.use_existing ? 0 : 1
-  name                               = "${var.vpc_name}-nat"
+  name                               = "nat-${var.vpc_name}"
   router                             = google_compute_router.main[0].name
   region                             = var.region
   nat_ip_allocate_option             = "AUTO_ONLY"
