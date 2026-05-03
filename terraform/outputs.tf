@@ -44,17 +44,17 @@ output "subnet_gateway_address" {
 
 output "router_id" {
   description = "Cloud Router ID (null when using existing VPC)"
-  value       = var.use_existing ? null : google_compute_router.main[0].id
+  value       = local.router_id
 }
 
 output "router_name" {
   description = "Cloud Router name (null when using existing VPC)"
-  value       = var.use_existing ? null : google_compute_router.main[0].name
+  value       = local.router_name
 }
 
 output "nat_name" {
   description = "Cloud NAT name (null when using existing VPC)"
-  value       = var.use_existing ? null : google_compute_router_nat.main[0].name
+  value       = local.nat_name
 }
 
 output "firewall_internal_rule" {
@@ -84,9 +84,9 @@ output "connection_info" {
     vpc_id       = local.vpc_id
     subnet_id    = local.subnet_id
     subnet_cidr  = local.subnet_cidr
-    router_id    = var.use_existing ? null : google_compute_router.main[0].id
-    router_name  = var.use_existing ? null : google_compute_router.main[0].name
-    nat_name     = var.use_existing ? null : google_compute_router_nat.main[0].name
+    router_id    = local.router_id
+    router_name  = local.router_name
+    nat_name     = local.nat_name
     region       = var.region
     project_id   = var.project_id
     use_existing = var.use_existing
