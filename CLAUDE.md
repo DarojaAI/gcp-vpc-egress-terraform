@@ -111,6 +111,7 @@ The module exports `vpc_id`, `subnet_id`, `router_id`, `nat_name`, and `connecti
 ## Gotchas
 
 - **Default value divergence:** Root module defaults `enable_flow_logs`, `allow_ssh`, `allow_postgres`, `log_config_enabled` to `true`; the nested `terraform/` module defaults them to `false`. If you consume the nested module directly (`source = ".../terraform"`), set these explicitly — don't rely on the table above, which reflects root-module defaults.
+- **`use_existing` must be a literal bool or plain variable:** Never set `use_existing` to another module's output (e.g., `use_existing = module.foo.enabled`). Terraform evaluates `count` on resources/data sources at plan time — if the value isn't statically known, all `[0]` index accesses become non-deterministic and can produce spurious changes or errors. Use a local bool variable or a literal `true`/`false`.
 - **Provider configuration:** The root passes `providers = { google = google }` to the nested module so callers can use `count`, `for_each`, and `depends_on` on the module block. Don't add `provider` blocks inside `terraform/`.
 
 ## Release Process

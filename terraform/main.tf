@@ -19,6 +19,13 @@ data "google_compute_network" "existing" {
   count   = var.use_existing ? 1 : 0
   name    = var.existing_vpc_name
   project = var.project_id
+
+  lifecycle {
+    precondition {
+      condition     = var.existing_vpc_name != ""
+      error_message = "existing_vpc_name must be set when use_existing = true."
+    }
+  }
 }
 
 data "google_compute_subnetwork" "existing" {
@@ -26,6 +33,13 @@ data "google_compute_subnetwork" "existing" {
   name    = var.existing_subnet_name
   region  = var.region
   project = var.project_id
+
+  lifecycle {
+    precondition {
+      condition     = var.existing_subnet_name != ""
+      error_message = "existing_subnet_name must be set when use_existing = true."
+    }
+  }
 }
 
 # ============================================
@@ -43,6 +57,11 @@ locals {
   subnet_cidr      = var.use_existing ? data.google_compute_subnetwork.existing[0].ip_cidr_range : google_compute_subnetwork.main[0].ip_cidr_range
   subnet_self_link = var.use_existing ? data.google_compute_subnetwork.existing[0].self_link : google_compute_subnetwork.main[0].self_link
   subnet_gateway   = var.use_existing ? data.google_compute_subnetwork.existing[0].gateway_address : google_compute_subnetwork.main[0].gateway_address
+
+  # Router and NAT only exist when creating new infrastructure; null when adopting existing
+  router_id   = var.use_existing ? null : google_compute_router.main[0].id
+  router_name = var.use_existing ? null : google_compute_router.main[0].name
+  nat_name    = var.use_existing ? null : google_compute_router_nat.main[0].name
 }
 
 # ============================================
