@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.2](https://github.com/DarojaAI/gcp-vpc-egress-terraform/compare/v1.2.1...v1.2.2) (2026-05-03)
+
+
+### Bug Fixes
+
+* harden use_existing contract with preconditions and consistent outputs ([a26a298](https://github.com/DarojaAI/gcp-vpc-egress-terraform/commit/a26a2982328ad9eea62f5687eef7fb381ac1d510))
+* rename router/nat to match postgres module v3.0.1 naming convention ([e27c3fa](https://github.com/DarojaAI/gcp-vpc-egress-terraform/commit/e27c3fa6bcb3c21ce4f0b766cdfff1f59687e874))
+
 ## [1.2.1](https://github.com/DarojaAI/gcp-vpc-egress-terraform/compare/v1.2.0...v1.2.1) (2026-05-02)
 
 
