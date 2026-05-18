@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.3](https://github.com/DarojaAI/gcp-vpc-egress-terraform/compare/v1.2.2...v1.2.3) (2026-05-18)
+
+
+### Bug Fixes
+
+* default enable_connectivity_tests to false ([#27](https://github.com/DarojaAI/gcp-vpc-egress-terraform/issues/27)) ([776f07f](https://github.com/DarojaAI/gcp-vpc-egress-terraform/commit/776f07fcaf06e86228ce0a2e3d89c904c612de05))
+
 ## [1.2.2](https://github.com/DarojaAI/gcp-vpc-egress-terraform/compare/v1.2.1...v1.2.2) (2026-05-04)
 
 
