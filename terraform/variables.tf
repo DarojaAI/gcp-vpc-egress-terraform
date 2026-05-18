@@ -130,7 +130,7 @@ variable "existing_subnet_name" {
 }
 
 variable "enable_connectivity_tests" {
-  description = "Enable GCP connectivity tests to verify egress paths"
+  description = "Enable GCP connectivity tests to verify egress paths (creates test VM)"
   type        = bool
-  default     = true
+  default     = false
 }
