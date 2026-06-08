@@ -19,6 +19,13 @@ data "google_compute_network" "existing" {
   count   = var.use_existing ? 1 : 0
   name    = var.existing_vpc_name
   project = var.project_id
+
+  lifecycle {
+    precondition {
+      condition     = var.existing_vpc_name != ""
+      error_message = "existing_vpc_name must be set when use_existing = true."
+    }
+  }
 }
 
 data "google_compute_subnetwork" "existing" {
@@ -26,6 +33,13 @@ data "google_compute_subnetwork" "existing" {
   name    = var.existing_subnet_name
   region  = var.region
   project = var.project_id
+
+  lifecycle {
+    precondition {
+      condition     = var.existing_subnet_name != ""
+      error_message = "existing_subnet_name must be set when use_existing = true."
+    }
+  }
 }
 
 # ============================================
@@ -33,15 +47,21 @@ data "google_compute_subnetwork" "existing" {
 # ============================================
 
 locals {
-  # Use try() to safely access resources with count (returns null when count=0)
-  vpc_id           = try(google_compute_network.main[0].id, data.google_compute_network.existing[0].id)
-  vpc_name         = try(google_compute_network.main[0].name, data.google_compute_network.existing[0].name)
-  vpc_self_link    = try(google_compute_network.main[0].self_link, data.google_compute_network.existing[0].self_link)
-  subnet_id        = try(google_compute_subnetwork.main[0].id, data.google_compute_subnetwork.existing[0].id)
-  subnet_name      = try(google_compute_subnetwork.main[0].name, data.google_compute_subnetwork.existing[0].name)
-  subnet_cidr      = try(google_compute_subnetwork.main[0].ip_cidr_range, data.google_compute_subnetwork.existing[0].ip_cidr_range, var.subnet_cidr)
-  subnet_self_link = try(google_compute_subnetwork.main[0].self_link, data.google_compute_subnetwork.existing[0].self_link)
-  subnet_gateway   = try(google_compute_subnetwork.main[0].gateway_address, data.google_compute_subnetwork.existing[0].gateway_address)
+  # Explicitly toggle between create-mode and adopt-mode
+  # This gives clear error attribution: data source fails at data source, resource fails at resource
+  vpc_id           = var.use_existing ? data.google_compute_network.existing[0].id : google_compute_network.main[0].id
+  vpc_name         = var.use_existing ? data.google_compute_network.existing[0].name : google_compute_network.main[0].name
+  vpc_self_link    = var.use_existing ? data.google_compute_network.existing[0].self_link : google_compute_network.main[0].self_link
+  subnet_id        = var.use_existing ? data.google_compute_subnetwork.existing[0].id : google_compute_subnetwork.main[0].id
+  subnet_name      = var.use_existing ? data.google_compute_subnetwork.existing[0].name : google_compute_subnetwork.main[0].name
+  subnet_cidr      = var.use_existing ? data.google_compute_subnetwork.existing[0].ip_cidr_range : google_compute_subnetwork.main[0].ip_cidr_range
+  subnet_self_link = var.use_existing ? data.google_compute_subnetwork.existing[0].self_link : google_compute_subnetwork.main[0].self_link
+  subnet_gateway   = var.use_existing ? data.google_compute_subnetwork.existing[0].gateway_address : google_compute_subnetwork.main[0].gateway_address
+
+  # Router and NAT only exist when creating new infrastructure; null when adopting existing
+  router_id   = var.use_existing ? null : google_compute_router.main[0].id
+  router_name = var.use_existing ? null : google_compute_router.main[0].name
+  nat_name    = var.use_existing ? null : google_compute_router_nat.main[0].name
 }
 
 # ============================================
@@ -76,6 +96,13 @@ resource "google_compute_subnetwork" "main" {
       metadata             = "INCLUDE_ALL_METADATA"
     }
   }
+
+  lifecycle {
+    postcondition {
+      condition     = self.private_ip_google_access == true
+      error_message = "private_ip_google_access must remain enabled for Private Google Access."
+    }
+  }
 }
 
 # ============================================
@@ -84,7 +111,7 @@ resource "google_compute_subnetwork" "main" {
 
 resource "google_compute_router" "main" {
   count   = var.use_existing ? 0 : 1
-  name    = "${var.vpc_name}-router"
+  name    = "router-${var.vpc_name}"
   region  = var.region
   network = local.vpc_id
 
@@ -97,7 +124,7 @@ resource "google_compute_router" "main" {
 
 resource "google_compute_router_nat" "main" {
   count                              = var.use_existing ? 0 : 1
-  name                               = "${var.vpc_name}-nat"
+  name                               = "nat-${var.vpc_name}"
   router                             = google_compute_router.main[0].name
   region                             = var.region
   nat_ip_allocate_option             = "AUTO_ONLY"
@@ -106,6 +133,13 @@ resource "google_compute_router_nat" "main" {
   log_config {
     enable = var.log_config_enabled
     filter = "ERRORS_ONLY"
+  }
+
+  lifecycle {
+    postcondition {
+      condition     = self.nat_ip_allocate_option == "AUTO_ONLY"
+      error_message = "NAT IP allocation mode unexpectedly changed from AUTO_ONLY."
+    }
   }
 
   depends_on = [google_compute_router.main]
@@ -173,22 +207,71 @@ resource "google_compute_firewall" "allow_postgres" {
   target_tags   = ["postgres"]
 }
 
-# Allow outbound egress traffic (https, http, dns)
-resource "google_compute_firewall" "allow_egress" {
-  name    = "${var.vpc_name}-allow-egress"
-  network = local.vpc_name
+# ============================================
+# Connectivity Tests (verify egress works)
+# ============================================
 
-  direction = "EGRESS"
+# Test NAT egress path: subnet -> 8.8.8.8:443
+resource "google_network_management_connectivity_test" "nat_egress" {
+  count = var.enable_connectivity_tests && !var.use_existing ? 1 : 0
 
-  allow {
-    protocol = "tcp"
-    ports    = ["443", "80"]
+  name = "${var.vpc_name}-test-nat-egress"
+
+  source {
+    instance = google_compute_instance.test_vm[0].id
   }
 
-  allow {
-    protocol = "udp"
-    ports    = ["53"]
+  destination {
+    ip_address = "8.8.8.8"
+    port       = 443
   }
 
-  destination_ranges = ["0.0.0.0/0"]
+  protocol = "TCP"
 }
+
+# Test Private Google Access: subnet -> metadata.google.internal
+resource "google_network_management_connectivity_test" "private_google_access" {
+  count = var.enable_connectivity_tests && !var.use_existing ? 1 : 0
+
+  name = "${var.vpc_name}-test-private-google-access"
+
+  source {
+    instance = google_compute_instance.test_vm[0].id
+  }
+
+  destination {
+    ip_address = "metadata.google.internal"
+    port       = 80
+  }
+
+  protocol = "TCP"
+}
+
+# Minimal test VM (no external IP) in the subnet to run connectivity tests
+resource "google_compute_instance" "test_vm" {
+  count = var.enable_connectivity_tests && !var.use_existing ? 1 : 0
+
+  name         = "${var.vpc_name}-test-vm"
+  machine_type = "e2-micro"
+  zone         = "${var.region}-a"
+
+  boot_disk {
+    initialize_params {
+      image = "debian-cloud/debian-11"
+    }
+  }
+
+  network_interface {
+    subnetwork = google_compute_subnetwork.main[0].id
+    # No external IP - tests NAT functionality
+  }
+
+  tags = ["ssh", "postgres"]
+
+  metadata = {
+    enable-oslogin = "true"
+  }
+
+  depends_on = [google_compute_router_nat.main]
+}
+

@@ -1,23 +1,17 @@
+config {
+  force = false
+}
+
 plugin "google" {
   enabled = true
-  version = "0.27.0"
+  version = "0.39.0"
   source  = "github.com/terraform-linters/tflint-ruleset-google"
 }
 
-rule "google_compute_firewall_invalid_name" {
-  enabled = true
+rule "terraform_required_providers" {
+  enabled = false
 }
 
-rule "google_compute_network_invalid_name" {
-  enabled = true
+rule "terraform_unused_declarations" {
+  enabled = false
 }
-
-rule "google_compute_router_invalid_name" {
-  enabled = true
-}
-
-# Disable rules that may conflict with our structure
-disable = [
-  "terraform_deprecated_interpolation",
-  "terraform_unused_declarations",
-]

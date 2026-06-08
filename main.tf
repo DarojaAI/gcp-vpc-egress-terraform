@@ -32,6 +32,12 @@ module "vpc_module" {
   tags                 = var.tags
   log_config_enabled   = var.log_config_enabled
   flow_sampling        = var.flow_sampling
+
+  use_existing         = var.use_existing
+  existing_vpc_name    = var.existing_vpc_name
+  existing_subnet_name = var.existing_subnet_name
+
+  enable_connectivity_tests = var.enable_connectivity_tests
 }
 
 # =============================================================================
@@ -103,10 +109,6 @@ output "firewall_internal_rule" {
   value       = module.vpc_module.firewall_internal_rule
 }
 
-output "firewall_egress_rule" {
-  description = "Firewall rule for egress"
-  value       = module.vpc_module.firewall_egress_rule
-}
 
 output "nat_name" {
   description = "Cloud NAT gateway name"

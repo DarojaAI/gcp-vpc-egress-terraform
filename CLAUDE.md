@@ -23,11 +23,14 @@ terraform fmt -recursive
 # Validate Terraform syntax
 terraform validate
 
-# Initialize Terraform (if needed for examples)
-cd examples/basic && terraform init
+# Initialize Terraform (for the with-postgres example)
+cd examples/with-postgres-example && terraform init
 
 # Plan example (requires GCP credentials)
-cd examples/basic && terraform plan
+cd examples/with-postgres-example && terraform plan
+
+# Lint terraform with tflint (catches provider schema issues)
+cd terraform && tflint --init --config=../.tflint.hcl && tflint --config=../.tflint.hcl
 
 # Run pre-commit hooks (includes fmt and validate)
 pre-commit run --all-files
@@ -52,6 +55,7 @@ Key configuration:
 - NAT uses `AUTO_ONLY` IP allocation (GCP manages IPs)
 - `ALL_SUBNETWORKS_ALL_IP_RANGES` gives every VM egress access
 - Firewall rules are conditionally created based on `allow_ssh` and `allow_postgres` flags
+- Set `use_existing = true` to attach to an existing VPC/subnet instead of creating new ones. Network/subnet/router/NAT resources get `count = 0` and data sources are used instead; firewall rules are still created against the existing network. The `locals` block in `terraform/main.tf` uses `try()` to read from whichever side (resource or data source) is active.
 
 ## Module Usage
 
@@ -86,15 +90,29 @@ module "vpc_egress" {
 | `project_id` | GCP Project ID | required |
 | `region` | GCP region | "us-central1" |
 | `vpc_name` | VPC network name | required |
+| `subnet_name` | Subnet name suffix (full name: `{vpc_name}-{subnet_name}`) | "subnet" |
 | `subnet_cidr` | Subnet CIDR block | "10.0.0.0/24" |
 | `environment` | Environment name | "dev" |
 | `enable_flow_logs` | Enable VPC flow logging | true |
 | `allow_ssh` | Create SSH firewall rule | true |
+| `allow_ssh_from_cidrs` | CIDR blocks allowed for SSH | `["0.0.0.0/0"]` |
 | `allow_postgres` | Create PostgreSQL firewall rule | true |
+| `postgres_port` | PostgreSQL port | 5432 |
+| `log_config_enabled` | Enable NAT + flow log logging | true |
+| `flow_sampling` | VPC flow sampling rate (0.0–1.0) | 0.5 |
+| `use_existing` | Attach to existing VPC/subnet instead of creating | false |
+| `existing_vpc_name` | Existing VPC name (required when `use_existing = true`) | "" |
+| `existing_subnet_name` | Existing subnet name (required when `use_existing = true`) | "" |
 
 ## Outputs
 
 The module exports `vpc_id`, `subnet_id`, `router_id`, `nat_name`, and `connection_info` for integration with other modules (PostgreSQL, Kubernetes, dbt, etc.).
+
+## Gotchas
+
+- **Default value divergence:** Root module defaults `enable_flow_logs`, `allow_ssh`, `allow_postgres`, `log_config_enabled` to `true`; the nested `terraform/` module defaults them to `false`. If you consume the nested module directly (`source = ".../terraform"`), set these explicitly — don't rely on the table above, which reflects root-module defaults.
+- **`use_existing` must be a literal bool or plain variable:** Never set `use_existing` to another module's output (e.g., `use_existing = module.foo.enabled`). Terraform evaluates `count` on resources/data sources at plan time — if the value isn't statically known, all `[0]` index accesses become non-deterministic and can produce spurious changes or errors. Use a local bool variable or a literal `true`/`false`.
+- **Provider configuration:** The root passes `providers = { google = google }` to the nested module so callers can use `count`, `for_each`, and `depends_on` on the module block. Don't add `provider` blocks inside `terraform/`.
 
 ## Release Process
 

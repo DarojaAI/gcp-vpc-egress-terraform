@@ -5,7 +5,7 @@
 *.tfvars.json
 !example.tfvars
 .terraform/
-.terraform.lock.hcl
+!.terraform.lock.hcl
 
 # IDE
 .vscode/

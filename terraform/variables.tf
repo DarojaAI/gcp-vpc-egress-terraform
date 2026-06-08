@@ -16,6 +16,11 @@ variable "region" {
 variable "vpc_name" {
   description = "VPC network name"
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-z]([-a-z0-9]{0,61}[a-z0-9])?$", var.vpc_name))
+    error_message = "vpc_name must start with a lowercase letter, contain only lowercase letters, numbers, and hyphens, and be 1-63 characters long."
+  }
 }
 
 variable "subnet_name" {
@@ -28,6 +33,11 @@ variable "subnet_cidr" {
   description = "Subnet CIDR block (e.g., 10.0.0.0/24)"
   type        = string
   default     = "10.0.0.0/24"
+
+  validation {
+    condition     = can(cidrhost(var.subnet_cidr, 0))
+    error_message = "subnet_cidr must be a valid CIDR block."
+  }
 }
 
 variable "environment" {
@@ -52,6 +62,11 @@ variable "allow_ssh_from_cidrs" {
   description = "CIDR blocks allowed for SSH (if not allowing from anywhere)"
   type        = list(string)
   default     = ["0.0.0.0/0"]
+
+  validation {
+    condition     = alltrue([for cidr in var.allow_ssh_from_cidrs : can(cidrhost(cidr, 0))])
+    error_message = "Each entry in allow_ssh_from_cidrs must be a valid CIDR block."
+  }
 }
 
 variable "allow_postgres" {
@@ -112,4 +127,10 @@ variable "existing_subnet_name" {
   description = "Name of existing subnet (required when use_existing is true)"
   type        = string
   default     = ""
+}
+
+variable "enable_connectivity_tests" {
+  description = "Enable GCP connectivity tests to verify egress paths (creates test VM)"
+  type        = bool
+  default     = false
 }
