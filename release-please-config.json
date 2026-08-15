@@ -1,9 +1,0 @@
-{
-  "packages": {
-    ".": {
-      "release-type": "terraform-module",
-      "package-name": "gcp-vpc-egress-terraform",
-      "changelog-path": "CHANGELOG.md"
-    }
-  }
-}

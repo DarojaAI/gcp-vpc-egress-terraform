@@ -1,27 +1,51 @@
-name: Create Release
+name: Release
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - master
+  workflow_dispatch:
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+  semantic-release:
+    uses: DarojaAI/infra-actions/.github/workflows/reusable-semantic-release.yml@main
+    with:
+      skip-dirty-check: true
+    secrets:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
 
+  update-versions-md:
+    name: Update VERSIONS.md
+    needs: semantic-release
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          generate_release_notes: true
+      - name: Get latest tag
+        id: tag
+        run: |
+          LATEST=$(git describe --tags --abbrev=0)
+          echo "version=${LATEST#v}" >> "$GITHUB_OUTPUT"
+          echo "Latest tag: $LATEST"
+
+      - name: Update VERSIONS.md
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          sed -i "s|## Current Version: .*|## Current Version: ${NEW_VERSION}|" VERSIONS.md
+          git diff --exit-code VERSIONS.md > /dev/null && echo "No change needed" && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add VERSIONS.md
+          git commit -m "chore(release): update VERSIONS.md to ${NEW_VERSION} [skip ci]"
+          git push

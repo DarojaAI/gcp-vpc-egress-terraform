@@ -1,0 +1,6 @@
+{
+  "name": "gcp-vpc-egress-terraform",
+  "version": "1.2.5",
+  "private": true,
+  "description": "Terraform module for VPC egress infrastructure on GCP"
+}
