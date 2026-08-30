@@ -15,10 +15,11 @@ These inputs must be provided to use this module:
 | `project_id` | string | GCP project ID | `my-project-123` |
 | `region` | string | GCP region | `us-central1` |
 | `environment` | string | Deployment environment (dev/staging/prod) | `dev` |
-| `repo_prefix` | string | Repository name prefix for resource naming | `rag-research-tool` |
 | `vpc_name` | string | VPC network name | `rag-vpc` |
 | `subnet_name` | string | Subnet name | `rag-subnet` |
 | `subnet_cidr` | string | Subnet CIDR range | `10.0.1.0/24` |
+
+> **Note:** No `repo_prefix` input exists. Resource naming is derived from `vpc_name`/`subnet_name` (e.g. `{vpc_name}-subnet`, `router-{vpc_name}`) — see `variables.tf`. Earlier versions of this doc listed `repo_prefix`; it was removed in PR #24.
 
 ## Optional Inputs
 
@@ -26,8 +27,17 @@ These inputs have sensible defaults but can be customized:
 
 | Input | Type | Default | Description |
 |-------|------|---------|-------------|
-| `enable_cloud_router` | bool | `false` | Create Cloud Router for hybrid connectivity |
-| `nat_log_filter` | string | `"ERRORS_ONLY"` | NAT logging filter level |
+| `enable_flow_logs` | bool | `false` | Enable VPC flow logging |
+| `log_config_enabled` | bool | `false` | Enable flow-log `log_config` block |
+| `flow_sampling` | number | `0.5` | Flow-log sampling rate (0–1) |
+| `allow_ssh` | bool | `false` | Open SSH from `allow_ssh_from_cidrs` |
+| `allow_postgres` | bool | `false` | Allow Postgres (`postgres_port`) within subnet |
+| `use_existing` | bool | `false` | Adopt existing VPC/subnet instead of creating |
+| `existing_vpc_name` | string | `""` | Required when `use_existing = true` |
+| `existing_subnet_name` | string | `""` | Required when `use_existing = true` |
+| `enable_connectivity_tests` | bool | `false` | Create test VM + connectivity tests |
+
+> **Note:** `enable_cloud_router` and `nat_log_filter` were removed in PR #24 — they are not module inputs. A Cloud Router + Cloud NAT are always created in create-mode; NAT log filter is fixed at `ERRORS_ONLY` in `terraform/main.tf`.
 
 ## Critical Outputs to Re-export
 
@@ -127,23 +137,27 @@ subnet_name  = module.vpc_egress.subnet_name
 
 **Why:** Network names are module outputs. Always reference them to ensure consistency if the module changes.
 
-### ❌ Mistake 3: Forgetting NAT Gateway Output
+### ❌ Mistake 3: Assuming a static NAT gateway IP output
 
 **Wrong:**
-```hcl
-# Root module outputs only include network info
-# External egress depends on NAT gateway IP
-```
-
-**Correct:**
 ```hcl
 output "nat_gateway_ip" {
   description = "Cloud NAT public IP for external egress"
   value       = module.vpc_egress.nat_gateway_ip
 }
 ```
+The module exposes **no** `nat_gateway_ip` output. NAT is created with `nat_ip_allocate_option = "AUTO_ONLY"` (see `terraform/main.tf`), so the public IPs are ephemeral and Google-managed — there is nothing to reference.
 
-**Why:** Services using the VPC need to know the NAT gateway IP for firewall rules and debugging external connectivity.
+**Correct:**
+```hcl
+# NAT exists in create-mode; reference its name for debugging/tags.
+output "nat_name" {
+  description = "Cloud NAT name (null when adopting an existing VPC)"
+  value       = module.vpc_egress.nat_name
+}
+```
+
+**Why:** Services needing outbound egress should rely on the VPC's NAT (auto-allocated public IPs), not a fixed IP. If a stable egress IP is a hard requirement, that is a module contract change — open an issue, don't re-architect it in the consuming repo (the module owns the NAT).
 
 ### ❌ Mistake 4: Not Validating CIDR Ranges
 
