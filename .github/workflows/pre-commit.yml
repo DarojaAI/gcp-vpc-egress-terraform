@@ -131,3 +131,34 @@ jobs:
       - name: Run terraform test (mock_provider + run block)
         working-directory: test/fixtures/plan-only
         run: terraform test
+
+  # P0 contract regression coverage (issue #32): terraform test against the
+  # test/contract fixture. Backs the *public contract* of this consumable
+  # module — output keys + resource counts by use_existing branch. Contract
+  # drift is silent across every consumer (dev-nexus, rag_research_tool,
+  # postgres-terraform), so this gate runs in CI. mock_provider avoids GCP
+  # credentials. Both run blocks are `command = apply` (safe under mock)
+  # because computed attributes are unknown during plan.
+  #
+  # Precondition-message regression (criterion #3 of #32) is NOT expressible
+  # here: the required data sources live inside module.vpc_egress, and
+  # terraform test's expect_failures cannot address child-module objects.
+  # See test/contract/contract.tftest.hcl for the documented limitation.
+  terraform-contract-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: '1.16.0'
+
+      - name: Initialize contract fixture
+        working-directory: test/contract
+        run: terraform init -backend=false
+
+      - name: Run terraform test (contract regression)
+        working-directory: test/contract
+        run: terraform test
